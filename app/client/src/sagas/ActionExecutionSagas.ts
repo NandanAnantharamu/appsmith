@@ -349,7 +349,7 @@ export function* executeActionSaga(
       if (onError) {
         yield put(
           executeAction({
-            dynamicString: onError,
+            triggers: onError,
             event: {
               ...event,
               type: EventType.ON_ERROR,
@@ -376,7 +376,7 @@ export function* executeActionSaga(
       if (onSuccess) {
         yield put(
           executeAction({
-            dynamicString: onSuccess,
+            triggers: onSuccess,
             event: {
               ...event,
               type: EventType.ON_SUCCESS,
@@ -405,7 +405,7 @@ export function* executeActionSaga(
     if (onError) {
       yield put(
         executeAction({
-          dynamicString: `{{${onError}}}`,
+          triggers: onError,
           event: {
             ...event,
             type: EventType.ON_ERROR,
@@ -474,12 +474,7 @@ function* executeActionTriggers(
 }
 
 function* executeAppAction(action: ReduxAction<ExecuteActionPayload>) {
-  const { dynamicString, event, responseData } = action.payload;
-  log.debug("Evaluating data tree to get action trigger");
-  log.debug({ dynamicString });
-  const tree = yield select(getDataTree);
-  log.debug({ tree });
-  const { triggers } = getDynamicValue(dynamicString, tree, responseData, true);
+  const { triggers, event, responseData } = action.payload;
   log.debug({ triggers });
   if (triggers && triggers.length) {
     yield all(

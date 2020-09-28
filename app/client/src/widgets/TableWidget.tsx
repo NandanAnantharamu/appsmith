@@ -24,6 +24,7 @@ import { isNumber, isString, isUndefined } from "lodash";
 import * as Sentry from "@sentry/react";
 import { retryPromise } from "utils/AppsmithUtils";
 import withMeta, { WithMeta } from "./MetaHOC";
+import { ActionDescription } from "../entities/DataTree/dataTreeFactory";
 
 const ReactTableComponent = lazy(() =>
   retryPromise(() =>
@@ -571,7 +572,7 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
     this.resetSelectedRowIndex();
     this.props.updateWidgetMetaProperty("pageNo", 1);
     this.props.updateWidgetMetaProperty("searchText", searchKey, {
-      dynamicString: onSearchTextChanged,
+      triggers: onSearchTextChanged,
       event: {
         type: EventType.ON_SEARCH,
       },
@@ -582,9 +583,12 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
     super.updateWidgetProperty("hiddenColumns", hiddenColumns);
   };
 
-  onCommandClick = (action: string, onComplete: () => void) => {
+  onCommandClick = (
+    action: ActionDescription<any>[],
+    onComplete: () => void,
+  ) => {
     super.executeAction({
-      dynamicString: action,
+      triggers: action,
       event: {
         type: EventType.ON_CLICK,
         callback: onComplete,
@@ -617,7 +621,7 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
         "selectedRow",
         this.props.filteredTableData[index],
         {
-          dynamicString: this.props.onRowSelected,
+          triggers: this.props.onRowSelected,
           event: {
             type: EventType.ON_ROW_SELECTED,
           },
@@ -630,7 +634,7 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
     let pageNo = this.props.pageNo || 1;
     pageNo = pageNo + 1;
     this.props.updateWidgetMetaProperty("pageNo", pageNo, {
-      dynamicString: this.props.onPageChange,
+      triggers: this.props.onPageChange,
       event: {
         type: EventType.ON_NEXT_PAGE,
       },
@@ -650,7 +654,7 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
     pageNo = pageNo - 1;
     if (pageNo >= 1) {
       this.props.updateWidgetMetaProperty("pageNo", pageNo, {
-        dynamicString: this.props.onPageChange,
+        triggers: this.props.onPageChange,
         event: {
           type: EventType.ON_PREV_PAGE,
         },
@@ -700,10 +704,10 @@ export interface TableWidgetProps extends WidgetProps, WithMeta {
   searchText: string;
   defaultSearchText: string;
   tableData: object[];
-  onPageChange?: string;
+  onPageChange?: ActionDescription<any>[];
   pageSize: number;
-  onRowSelected?: string;
-  onSearchTextChanged: string;
+  onRowSelected?: ActionDescription<any>[];
+  onSearchTextChanged: ActionDescription<any>[];
   selectedRowIndex?: number;
   selectedRowIndices: number[];
   columnActions?: ColumnAction[];
