@@ -47,7 +47,7 @@ describe("<ImageWidget />", () => {
       bottomRow: 3,
       isLoading: false,
       imageShape: "RECTANGLE",
-      onClick: "",
+      onClick: [],
     };
     // Mock store to bypass the error of react-redux
     const store = configureStore()(initialState);
