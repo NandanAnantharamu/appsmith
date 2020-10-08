@@ -12,7 +12,6 @@ import {
 import { VALIDATION_TYPES } from "constants/WidgetValidation";
 import { TriggerPropertiesMap } from "utils/WidgetFactory";
 import * as Sentry from "@sentry/react";
-import { ActionDescription } from "../entities/DataTree/dataTreeFactory";
 
 class ButtonWidget extends BaseWidget<ButtonWidgetProps, ButtonWidgetState> {
   onButtonClickBound: (event: React.MouseEvent<HTMLElement>) => void;
@@ -46,7 +45,7 @@ class ButtonWidget extends BaseWidget<ButtonWidgetProps, ButtonWidgetState> {
         isLoading: true,
       });
       super.executeAction({
-        triggers: this.props.onClick,
+        dynamicString: this.props.onClick,
         event: {
           type: EventType.ON_CLICK,
           callback: this.handleActionComplete,
@@ -91,7 +90,7 @@ export type ButtonStyle =
 export interface ButtonWidgetProps extends WidgetProps {
   text?: string;
   buttonStyle?: ButtonStyle;
-  onClick?: ActionDescription<any>[];
+  onClick?: string;
   isDisabled?: boolean;
   isVisible?: boolean;
   buttonType?: ButtonType;
