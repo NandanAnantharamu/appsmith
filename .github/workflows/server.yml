@@ -151,3 +151,112 @@ jobs:
         shell: bash
         run: |
           exit 0
+          
+          
+          
+  #Updated by Nandan
+  - name: Installing Yarn serve
+        run: |
+          yarn global add serve
+          echo "$(yarn global bin)" >> $GITHUB_PATH
+      - name: Setting up the cypress tests
+        shell: bash
+        env:
+          APPSMITH_SSL_CERTIFICATE: ${{ secrets.APPSMITH_SSL_CERTIFICATE }}
+          APPSMITH_SSL_KEY: ${{ secrets.APPSMITH_SSL_KEY }}
+          CYPRESS_URL: ${{ secrets.CYPRESS_URL }}
+          CYPRESS_USERNAME: ${{ secrets.CYPRESS_USERNAME }}
+          CYPRESS_PASSWORD: ${{ secrets.CYPRESS_PASSWORD }}
+          CYPRESS_TESTUSERNAME1: ${{ secrets.CYPRESS_TESTUSERNAME1 }}
+          CYPRESS_TESTPASSWORD1: ${{ secrets.CYPRESS_TESTPASSWORD1 }}
+          CYPRESS_TESTUSERNAME2: ${{ secrets.CYPRESS_TESTUSERNAME2 }}
+          CYPRESS_TESTPASSWORD2: ${{ secrets.CYPRESS_TESTPASSWORD1 }}
+          APPSMITH_DISABLE_TELEMETRY: true
+          APPSMITH_GOOGLE_MAPS_API_KEY: ${{ secrets.APPSMITH_GOOGLE_MAPS_API_KEY }}
+          POSTGRES_PASSWORD: postgres
+        run: |
+          ./cypress/setup-test.sh
+      - name: Run the cypress test
+        uses: cypress-io/github-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
+          CYPRESS_USERNAME: ${{ secrets.CYPRESS_USERNAME }}
+          CYPRESS_PASSWORD: ${{ secrets.CYPRESS_PASSWORD }}
+          CYPRESS_TESTUSERNAME1: ${{ secrets.CYPRESS_TESTUSERNAME1 }}
+          CYPRESS_TESTPASSWORD1: ${{ secrets.CYPRESS_TESTPASSWORD1 }}
+          CYPRESS_TESTUSERNAME2: ${{ secrets.CYPRESS_TESTUSERNAME2 }}
+          CYPRESS_TESTPASSWORD2: ${{ secrets.CYPRESS_TESTPASSWORD1 }}
+          APPSMITH_DISABLE_TELEMETRY: true
+          APPSMITH_GOOGLE_MAPS_API_KEY: ${{ secrets.APPSMITH_GOOGLE_MAPS_API_KEY }}
+          COMMIT_INFO_MESSAGE: ${{ github.event.pull_request.title }}
+        with:
+          browser: chrome
+          headless: true
+          record: true
+          install: false
+          parallel: true
+          group: "Electrons on Github Action"
+          spec: "cypress/integration/Smoke_TestSuite/**/*.js"
+          working-directory: app/client
+          # tag will be either "push" or "pull_request"
+          tag: ${{ github.event_name }}
+          env: "NODE_ENV=development"
+
+      # Upload the screenshots as artifacts if there's a failure
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-screenshots-${{ matrix.job }}
+          path: app/client/cypress/screenshots/
+
+  ui-test-result:
+    needs: ui-test
+    # Only run if the ui-test with matrices step is successful
+    if: always()
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - run: echo "All ui-test matrices completed"
+
+      - name: Return status for ui-matrix
+        run: |
+          if [[ "${{ needs.ui-test.result }}" == "success" ]]; then
+            echo "Integration tests completed successfully!";
+            exit 0;
+          elif [[ "${{ needs.ui-test.result }}" == "skipped" ]]; then
+            echo "Integration tests were skipped";
+            exit 1;
+          else
+            echo "Integration tests have failed";
+            exit 1;
+          fi
+  package:
+    needs: ui-test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/client
+    # Run this job only if all the previous steps are a success and the reference if the release or master branch
+    if: (success() && github.ref == 'refs/heads/release') || github.ref == 'refs/heads/master'
+
+    steps:
+      # Checkout the code
+      - name: Checkout the merged commit from PR and base branch
+        if: github.event_name == 'pull_request_review'
+        uses: actions/checkout@v2
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+
+      - name: Checkout the head commit of the branch
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v2
+
+      - name: Download the react build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build
+          path: app/client/build
