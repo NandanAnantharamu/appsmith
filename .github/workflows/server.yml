@@ -151,11 +151,10 @@ jobs:
         shell: bash
         run: |
           exit 0
-          
-          
+              
           
   #Updated by Nandan
-  - name: Installing Yarn serve
+      - name: Installing Yarn serve
         run: |
           yarn global add serve
           echo "$(yarn global bin)" >> $GITHUB_PATH
